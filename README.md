@@ -37,7 +37,7 @@ all by dnstap-read, but is escpaed in miekg/dns due to being defined as special
 in [isDomainNameLabelSpecial()](https://github.com/miekg/dns/blob/3b8982ccc6a0de0e195b964bcdd57da6fe119cbe/types.go#L595)
 
 This results in dnstap-read outputting `example'lookup/IN/A` while this
-tools prints `example\'lookup/IN/A`.
+tool prints `example\'lookup/IN/A`.
 
 The overall character espacing rules used by miekg/dns can be found in
 [UnpackDomainName()](https://github.com/miekg/dns/blob/3b8982ccc6a0de0e195b964bcdd57da6fe119cbe/msg.go#L373)
