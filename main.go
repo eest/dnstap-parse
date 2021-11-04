@@ -73,6 +73,7 @@ func main() {
 		var err error
 		var t time.Time
 		var sb strings.Builder
+		var queryAddress, responseAddress string
 
 		m := dt.GetMessage()
 
@@ -83,17 +84,31 @@ func main() {
 
 		isQuery := strings.HasSuffix(dnstap.Message_Type_name[int32(*m.Type)], "_QUERY")
 
+		// Query address: 10.10.10.10:31337 or ?
+		if qa != nil {
+			queryAddress = qa.String() + ":" + strconv.FormatUint(uint64(*m.QueryPort), 10)
+		} else {
+			queryAddress = "?"
+		}
+
+		// Response address: 10.10.10.10:31337 or ?
+		if ra != nil {
+			responseAddress = ra.String() + ":" + strconv.FormatUint(uint64(*m.ResponsePort), 10)
+		} else {
+			responseAddress = "?"
+		}
+
 		if isQuery {
 			err = msg.Unpack(m.QueryMessage)
 			if err != nil {
-				log.Printf("unable to unpack query message: %s", err)
+				log.Printf("unable to unpack query message (%s -> %s): %s", queryAddress, responseAddress, err)
 				msg = nil
 			}
 			t = time.Unix(int64(*m.QueryTimeSec), int64(*m.QueryTimeNsec))
 		} else {
 			err = msg.Unpack(m.ResponseMessage)
 			if err != nil {
-				log.Printf("unable to unpack response message: %s", err)
+				log.Printf("unable to unpack response message (%s <- %s): %s", queryAddress, responseAddress, err)
 				msg = nil
 			}
 			t = time.Unix(int64(*m.ResponseTimeSec), int64(*m.ResponseTimeNsec))
@@ -131,14 +146,8 @@ func main() {
 			log.Fatalf("Unexpected message type: %s", *m.Type)
 		}
 
-		// Query address: 10.10.10.10:31337 or ?
-		if qa != nil {
-			sb.WriteString(qa.String())
-			sb.WriteString(":")
-			sb.WriteString(strconv.FormatUint(uint64(*m.QueryPort), 10))
-		} else {
-			sb.WriteString("?")
-		}
+		// Query address
+		sb.WriteString(queryAddress)
 
 		// Direction arrow
 		if isQuery {
@@ -147,14 +156,8 @@ func main() {
 			sb.WriteString(" <- ")
 		}
 
-		// Response address: 10.10.10.10:31337 or ?
-		if ra != nil {
-			sb.WriteString(ra.String())
-			sb.WriteString(":")
-			sb.WriteString(strconv.FormatUint(uint64(*m.ResponsePort), 10))
-		} else {
-			sb.WriteString("?")
-		}
+		// Response address
+		sb.WriteString(responseAddress)
 
 		// UDP or TCP
 		sb.WriteString(" ")
