@@ -171,8 +171,9 @@ func main() {
 
 		// Record: name.example.com/IN/A or ?/?/?
 		sb.WriteString(" ")
-		// For cases where we were unable to unpack the DNS message we return ?/?/?
-		if msg == nil {
+		// For cases where we were unable to unpack the DNS message we
+		// return ?/?/?. The same goes for an empty question section.
+		if msg == nil || len(msg.Question) == 0 {
 			sb.WriteString("?/?/?")
 		} else {
 			// The name is printed without the trailing dot unless it specifically is the root zone
