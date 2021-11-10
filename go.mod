@@ -1,4 +1,4 @@
-module dnstap-parse
+module github.com/eest/dnstap-parse
 
 go 1.16
 
