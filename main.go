@@ -53,7 +53,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dec := dnstap.NewDecoder(r, 8192)
+	dec := dnstap.NewDecoder(r, int(dnstap.MaxPayloadSize))
 
 	timeFormat := "02-Jan-2006 15:04:05.000"
 
