@@ -75,49 +75,47 @@ func main() {
 		var sb strings.Builder
 		var queryAddress, responseAddress string
 
-		m := dt.GetMessage()
-
-		qa := net.IP(m.QueryAddress)
-		ra := net.IP(m.ResponseAddress)
+		qa := net.IP(dt.Message.QueryAddress)
+		ra := net.IP(dt.Message.ResponseAddress)
 
 		msg := new(dns.Msg)
 
-		isQuery := strings.HasSuffix(dnstap.Message_Type_name[int32(*m.Type)], "_QUERY")
+		isQuery := strings.HasSuffix(dnstap.Message_Type_name[int32(*dt.Message.Type)], "_QUERY")
 
 		// Query address: 10.10.10.10:31337 or ?
 		if qa != nil {
-			queryAddress = qa.String() + ":" + strconv.FormatUint(uint64(*m.QueryPort), 10)
+			queryAddress = qa.String() + ":" + strconv.FormatUint(uint64(*dt.Message.QueryPort), 10)
 		} else {
 			queryAddress = "?"
 		}
 
 		// Response address: 10.10.10.10:31337 or ?
 		if ra != nil {
-			responseAddress = ra.String() + ":" + strconv.FormatUint(uint64(*m.ResponsePort), 10)
+			responseAddress = ra.String() + ":" + strconv.FormatUint(uint64(*dt.Message.ResponsePort), 10)
 		} else {
 			responseAddress = "?"
 		}
 
 		if isQuery {
-			err = msg.Unpack(m.QueryMessage)
+			err = msg.Unpack(dt.Message.QueryMessage)
 			if err != nil {
 				log.Printf("unable to unpack query message (%s -> %s): %s", queryAddress, responseAddress, err)
 				msg = nil
 			}
-			t = time.Unix(int64(*m.QueryTimeSec), int64(*m.QueryTimeNsec))
+			t = time.Unix(int64(*dt.Message.QueryTimeSec), int64(*dt.Message.QueryTimeNsec))
 		} else {
-			err = msg.Unpack(m.ResponseMessage)
+			err = msg.Unpack(dt.Message.ResponseMessage)
 			if err != nil {
 				log.Printf("unable to unpack response message (%s <- %s): %s", queryAddress, responseAddress, err)
 				msg = nil
 			}
-			t = time.Unix(int64(*m.ResponseTimeSec), int64(*m.ResponseTimeNsec))
+			t = time.Unix(int64(*dt.Message.ResponseTimeSec), int64(*dt.Message.ResponseTimeNsec))
 		}
 
 		// Timestamp, like 27-Oct-2021 18:29:47.412
 		sb.WriteString(t.Local().Format(timeFormat))
 
-		switch *m.Type {
+		switch *dt.Message.Type {
 		case dnstap.Message_AUTH_QUERY:
 			sb.WriteString(" AQ ")
 		case dnstap.Message_AUTH_RESPONSE:
@@ -143,7 +141,7 @@ func main() {
 		case dnstap.Message_TOOL_RESPONSE:
 			sb.WriteString(" TR ")
 		default:
-			log.Fatalf("Unexpected message type: %s", *m.Type)
+			log.Fatalf("Unexpected message type: %s", *dt.Message.Type)
 		}
 
 		// Query address
@@ -161,14 +159,14 @@ func main() {
 
 		// UDP or TCP
 		sb.WriteString(" ")
-		sb.WriteString(m.SocketProtocol.String())
+		sb.WriteString(dt.Message.SocketProtocol.String())
 
 		// Size of message, like "37b"
 		sb.WriteString(" ")
 		if isQuery {
-			sb.WriteString(strconv.Itoa(len(m.QueryMessage)))
+			sb.WriteString(strconv.Itoa(len(dt.Message.QueryMessage)))
 		} else {
-			sb.WriteString(strconv.Itoa(len(m.ResponseMessage)))
+			sb.WriteString(strconv.Itoa(len(dt.Message.ResponseMessage)))
 		}
 		sb.WriteString("b")
 
